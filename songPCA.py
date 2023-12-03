@@ -9,7 +9,6 @@ import matplotlib.pyplot as plt
 import matplotlib.cm as cm  # Import colormap for colors
 import matplotlib.font_manager as fm
 
-# given a dictionary of songs and their metadata, apply PCA and return similar tracks
 def song_pca(songs_metadata, song_ids, playlist_title='playlist', mode='default', mean=[], n_components=5):
     # Convert song metadata to a matrix (rows as songs, columns as features)
     songs_matrix = np.array(list(songs_metadata.values()))
@@ -48,7 +47,28 @@ def song_pca(songs_metadata, song_ids, playlist_title='playlist', mode='default'
     colors, similarity_scores = calculate_similarities(songs_pca, mean, cosine_ratio, euclidean_ratio)  # Using first point as mean
 
     # Sort songs by similarity scores
-    sorted_indices = sorted(range(len(similarity_scores)), key=lambda i: similarity_scores[i], reverse=True)
+    indexlist = [i for i in range(len(similarity_scores))]
+    
+    #preserving similarity scores
+    sorted_indices = []
+    saved_similarity_scores = similarity_scores[:]
+    num = int(input("Enter 1 for quicksort and 2 for mergesort: "))
+    if num == 2:
+        print("Proceeding with mergesort")
+        sorted_indices = sorted(range(len(similarity_scores)), key=lambda i: similarity_scores[i], reverse=True)
+        capture1, capture2 = mergeSortedIndicies(similarity_scores, indexlist)
+        print("printing the indicies", sorted_indices, capture2)
+        sorted_indices = capture2
+    else:
+        if (num != 1):
+            print("Invalid input.")
+        print("Proceeding with quicksort")
+        sorted_indices = sorted(range(len(similarity_scores)), key=lambda i: similarity_scores[i], reverse=True)
+        capture1, capture2 = quicksortWrapper(similarity_scores, indexlist, len(similarity_scores)-1, 0)
+        print("printing the indicies", sorted_indices, capture2)
+        sorted_indices = capture2
+
+    similarity_scores = saved_similarity_scores
 
     # Retrieve top similar songs
     divisor = 0
@@ -83,19 +103,6 @@ def song_pca(songs_metadata, song_ids, playlist_title='playlist', mode='default'
     plt.figure(figsize=(8, 6))
     scatter = plt.scatter(songs_pca[:, 0], songs_pca[:, 1], c=colors, alpha=1)
 
-    # fonts
-    font_paths = [
-        'dependencies/HIMALAYA.TTF',
-        'dependencies/MINGLIUB.TTC',
-        'dependencies/SEGUIEMJ.TTF',
-        'dependencies/WINGDING.TTF',
-        'dependencies/OPENSE.TTF',
-        
-    ]
-    font_props = [fm.FontProperties(fname=path) for path in font_paths]
-    plt.rcParams['font.family'] = ['MS Gothic', 'Arial', 'sans-serif']
-    plt.rcParams['font.sans-serif'] = [prop.get_name() for prop in font_props] + plt.rcParams['font.sans-serif']
-
     # Create labels for annotations
     song_names = list(songs_metadata.keys())
     labels = [f"{song_names[i]}" for i in range(len(song_names))]
@@ -104,12 +111,8 @@ def song_pca(songs_metadata, song_ids, playlist_title='playlist', mode='default'
     cursor = mplcursors.cursor(scatter, hover=True)
     cursor.connect("add", lambda sel: sel.annotation.set_text(f"{labels[sel.index]} {similarity_scores[sel.index]:.2f}"))
 
-    plt.title(f"Similarity plot for: {playlist_title}")
-    plt.xlabel('D1')
-    plt.ylabel('D2')
-    plt.show()
-
     return songs_and_ids, mean, n_components
+
 
 def calculate_similarities(points, mean, cosine_ratio, euclidean_ratio):
     similarity_scores = [(cosine_ratio * cosine_similarity([mean], [point])[0][0]) +
@@ -123,3 +126,87 @@ def calculate_similarities(points, mean, cosine_ratio, euclidean_ratio):
     tint_values = [1 - (similarity / 100) for similarity in scaled_similarities]
     colors = [cm.Blues(1 - tint + 0.2) for tint in tint_values]
     return colors, scaled_similarities
+
+def mergeSortedIndicies(scores, indexes):
+    # this creates a range of numbers and sorts them according to their score
+    if len(scores) == 1:
+        return scores, indexes
+    middle = len(scores) // 2
+    leftlist = scores[:middle]
+    rightlist = scores[middle:]
+    leftindexlist = indexes[:middle]
+    rightindexlist = indexes[middle:]
+
+    leftlist, leftindexlist = mergeSortedIndicies(leftlist, leftindexlist)
+    rightlist, rightindexlist = mergeSortedIndicies(rightlist, rightindexlist)
+
+    leftindex = 0
+    rightindex = 0
+    mainindex = 0
+    #while loop for when both lists are still in use
+
+    while leftindex < len(leftlist) and rightindex < len(rightlist):
+        if leftlist[leftindex] >= rightlist[rightindex]:
+            indexes[mainindex] = leftindexlist[leftindex]
+            scores[mainindex] = leftlist[leftindex]
+            leftindex += 1
+        else:
+            indexes[mainindex] = rightindexlist[rightindex]
+            scores[mainindex] = rightlist[rightindex]
+            rightindex+=1
+        mainindex +=1
+    
+
+    while leftindex < len(leftindexlist):
+        indexes[mainindex] = leftindexlist[leftindex]
+        scores[mainindex] = scores[leftindex]
+        mainindex += 1
+        leftindex+=1
+    
+
+    while rightindex < len(rightindexlist):
+        indexes[mainindex] = rightindexlist[rightindex]
+        scores[mainindex] = scores[leftindex]
+        mainindex += 1
+        rightindex += 1
+    
+    return scores, indexes
+
+def quicksortPartition(array, indicies, high, low):
+    #we choose the ending of the array as the pivot element
+    pivotelement  = array[high]
+    pivotindex = indicies[high]
+    #we have iterators i and j that go through the low and high portions of the array
+    i = low -1
+    for j in range(low, high):
+        if array[j] >= pivotelement:
+            i +=1
+            temp = array[i]
+            temp1 = indicies[i]
+            array[i] = array[j]
+            indicies[i] = indicies[j]
+            array[j] = temp
+            indicies[j] = temp1
+    # now we need to put the pivot in the right spot
+    array[high] = array[i+1]
+    indicies[high] = indicies [i+1]
+    array[i+1] = pivotelement
+    indicies[i+1] = pivotindex
+    
+    return i+1, array, indicies
+
+def quicksortWrapper(array, indicies, high, low):
+    if low < high:
+        the_partition, newarray, newindicies = quicksortPartition(array, indicies, high, low)
+        array = newarray
+        indicies = newindicies
+
+        #now we do recursion on the array
+        newarray, newindicies = quicksortWrapper(array, indicies, the_partition-1, low)
+
+        array = newarray
+        indicies = newindicies
+        newarray, newindicies = quicksortWrapper(array, indicies, high, the_partition +1)
+        array = newarray
+        indicies = newindicies
+    return array, indicies
