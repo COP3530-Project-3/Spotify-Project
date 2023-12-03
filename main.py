@@ -14,8 +14,7 @@ def main():
 
   # Replace 'YOUR_PLAYLIST_ID' with the link to the spotify playlist
   # Extracted ID from the playlist URL
-  # playlist_id = input("Your playlist link: ")
-  playlist_id = 'https://open.spotify.com/playlist/4R2IFs0KwORgbid0NWArbO?si=c738865515d54628'
+  playlist_id = input("Your playlist link: ")
 
   if is_spotify_playlist(playlist_id):
 
@@ -33,19 +32,14 @@ def main():
       track_ids = list(similar_songs.values())
       rec_metadata, rec_ids = get_track_recommendations(spotify, track_ids, mean)
       rec_songs, mean, n_components = song_pca(rec_metadata, rec_ids, f'{playlist_title} radio', 'recommend', mean, n_components)
-      end_time = time.time()  # Record the end time
-      elapsed_time = end_time - start_time  # Calculate elapsed time
       
-      print(f"Program execution time: {elapsed_time:.2f} seconds")
-      
+      end_time = time.time()
+      elapsed_time = end_time - start_time
+      print(f"Runtime: {elapsed_time:.2f} seconds")
 
   else:
       print("I can't work with this link. Try again")
       main()
 
-  #TODO: with the returned essential songs from pca, get top 2 track recommendations for songs with a score > 50 using pca again, mode != plot
-
 if __name__ == "__main__":
   main()
-
-# playlist (length l) -> pca -> search (l/3)/return 3 songs per track searched -> see how it is
