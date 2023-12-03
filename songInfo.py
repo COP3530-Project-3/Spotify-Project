@@ -99,7 +99,6 @@ def get_track_recommendations(spotify, playlist, mean):
 
     for track in playlist:
         # returns 20 recommendations [result] for each track, keeps within the confines of the playlist traits
-        time.sleep(0.5)
         result = spotify.recommendations(seed_tracks=[track], limit=12)
         for track in result['tracks']:
             results.append(track)
@@ -129,20 +128,3 @@ def exponential_backoff(request_function, *args, **kwargs):
     print(f"Max rate limit reached. Please check back later.")
     exit(1)
 
-def get_sample_metadata():
-
-    # Read the data from the text file
-    file_path = 'song_data.txt'  # Replace this with the path to your file
-    with open(file_path, 'r') as file:
-        data = file.readlines()
-
-    # Initialize the dictionary to store song metadata
-    songs_metadata = {}
-
-    # Iterate through the data and populate the dictionary
-    for i in range(0, len(data), 2):
-        song_name = data[i].strip()
-        features = eval(data[i + 1])  # Convert string to list
-        songs_metadata[song_name] = features
-
-    return songs_metadata
