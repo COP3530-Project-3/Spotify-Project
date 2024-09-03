@@ -13,7 +13,3 @@ Explained Variance Ratios: Store the explained variance ratios (from PCA) using 
 
 Cosine/Euclidean similarity:  
 Compare the orientation/distance of songs in the transformed space to the weighted distribution of features in the playlist. This will allow us to determine similarity.
-
-Sorting Techniques:
-
-Implement Merge and Quicksort algorithms to rank the similarity scores
